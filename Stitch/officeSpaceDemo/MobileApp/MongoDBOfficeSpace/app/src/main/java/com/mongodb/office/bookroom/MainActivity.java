@@ -36,13 +36,13 @@ import org.bson.Document;
 
 import java.lang.ref.WeakReference;
 
-import java.util.Set;
+import java.util.*;
 
 public class MainActivity extends AppCompatActivity {
 
     private NfcAdapter nfc;
     private TextView text;
-    private static final String TAG = "blogApp";
+    private static final String TAG = "officeSpaceApp";
     private StitchAppClient _client;
     private RemoteMongoClient _mongoClient;
     private RemoteMongoCollection _remoteCollection;
@@ -62,7 +62,8 @@ public class MainActivity extends AppCompatActivity {
         this._client = Stitch.getDefaultAppClient();
         this._client.getAuth().loginWithCredential(new AnonymousCredential());
         _mongoClient = this._client.getServiceClient(RemoteMongoClient.factory, "mongodb-atlas");
-        _remoteCollection = _mongoClient.getDatabase("blog").getCollection("comments");
+
+        _remoteCollection = _mongoClient.getDatabase("officespace").getCollection("events");
 
 
         _remoteCollection.sync().configure(
@@ -80,6 +81,8 @@ public class MainActivity extends AppCompatActivity {
 
         Intent intent = getIntent();
         String action = intent.getAction();
+        final long ONE_MINUTE_IN_MILLIS=60000;//millisecs
+
 
         if (NfcAdapter.ACTION_TAG_DISCOVERED.equals(action)) {
 
@@ -93,9 +96,44 @@ public class MainActivity extends AppCompatActivity {
                     tagInfo += Integer.toHexString(tagId[i] & 0xFF);
                 }
                 if(!tagInfo.isEmpty()){
-                    addItem("Room 2003 Booked");
 
-                    text.setText("Room 2003 is booked");
+                    ArrayList attendees = new ArrayList();
+
+                    Map<String,String> attendee0=new HashMap<>();
+                    attendee0.put("email",("nunzio@example.com"));
+                    Map<String,String> attendee1=new HashMap<>();
+                    attendee1.put("email",("rita@example.com"));
+
+
+                    attendees.add(attendee0);
+                    attendees.add(attendee1);
+
+                    ArrayList start = new ArrayList();
+                    ArrayList end = new ArrayList();
+
+
+                    Date s  = new Date(System.currentTimeMillis());
+                    Date e  = new Date(s.getTime() + (30 * ONE_MINUTE_IN_MILLIS));
+
+                    Map<String,Date> startObj=new HashMap<>();
+                    Map<String,Date> endObj=new HashMap<>();
+                    Map<String,String> timezone=new HashMap<>();
+
+
+                    startObj.put("dateTime",s);
+                    endObj.put("dateTime",e);
+                    timezone.put("timeZone","Ireland/Dublin");
+
+                    start.add(startObj);
+                    start.add(timezone);
+
+                    end.add(startObj);
+                    end.add(timezone);
+
+
+                    addEvent("Emergency Team Sync","Dublin Office", "Office Space Demo",start,end,attendees);
+
+                    text.setText("Room 2003 is booked and my Team Alerted");
 
                 }
                 else{
@@ -156,19 +194,24 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void addItem(final String text) {
+    private void addEvent(final String summary, String location, String description, ArrayList start, ArrayList end, ArrayList attendees) {
         final Document doc = new Document();
         doc.put("owner_id", _client.getAuth().getUser().getId());
-        doc.put("comment", text);
+        doc.put("summary", summary);
+        doc.put("location", location);
+        doc.put("description", description);
+        doc.put("start", start);
+        doc.put("end", end);
+        doc.put("attendees", attendees);
 
             final Task<RemoteInsertOneResult> res = _remoteCollection.insertOne(doc);
         res.addOnCompleteListener(new OnCompleteListener<RemoteInsertOneResult>() {
             @Override
             public void onComplete(@NonNull final Task<RemoteInsertOneResult> task) {
                 if (task.isSuccessful()) {
-                    Log.e(TAG, "New item added", task.getException());
+                    Log.e(TAG, "New Event added", task.getException());
                 } else {
-                    Log.e(TAG, "Error adding item", task.getException());
+                    Log.e(TAG, "Error Event item", task.getException());
                 }
             }
         });
