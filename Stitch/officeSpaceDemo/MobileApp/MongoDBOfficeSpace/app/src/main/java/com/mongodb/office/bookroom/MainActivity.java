@@ -13,6 +13,8 @@ import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.mongodb.MongoClientSettings;
+import com.mongodb.client.MongoClient;
 import com.mongodb.stitch.android.core.auth.StitchUser;
 
 import com.mongodb.stitch.android.services.mongodb.remote.RemoteMongoClient;
@@ -31,12 +33,16 @@ import com.mongodb.stitch.core.services.mongodb.remote.sync.DefaultSyncConflictR
 import com.mongodb.stitch.core.services.mongodb.remote.sync.ErrorListener;
 import org.bson.BsonValue;
 import org.bson.Document;
-
+import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.codecs.pojo.PojoCodecProvider;
 
 
 import java.lang.ref.WeakReference;
 
 import java.util.*;
+
+import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
+import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -63,7 +69,9 @@ public class MainActivity extends AppCompatActivity {
         this._client.getAuth().loginWithCredential(new AnonymousCredential());
         _mongoClient = this._client.getServiceClient(RemoteMongoClient.factory, "mongodb-atlas");
 
-        _remoteCollection = _mongoClient.getDatabase("officespace").getCollection("events");
+
+        CodecRegistry pojoCodecRegistry = fromRegistries(MongoClientSettings.getDefaultCodecRegistry(), fromProviders(PojoCodecProvider.builder().automatic(true).build()));
+        _remoteCollection = _mongoClient.getDatabase("officespace").getCollection("events", Event.class).withCodecRegistry(pojoCodecRegistry);
 
 
         _remoteCollection.sync().configure(
@@ -114,10 +122,13 @@ public class MainActivity extends AppCompatActivity {
                     Date s  = new Date(System.currentTimeMillis());
                     Date e  = new Date(s.getTime() + (30 * ONE_MINUTE_IN_MILLIS));
 
-                    EventTime start = new EventTime(s);
-                    EventTime end = new EventTime(e);
+                    EventTime start = new EventTime();
+                    EventTime end = new EventTime();
 
-
+                    start.setDateTime(s);
+                    start.setTimeZone("");
+                    end.setDateTime(e);
+                    end.setTimeZone("");
 
                     addEvent("Emergency Team Sync","Dublin Office", "Office Space Demo",start,end,attendees);
 
@@ -182,15 +193,15 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void addEvent(final String summary, String location, String description, EventTime start, EventTime end, ArrayList attendees) {
-        final Document doc = new Document();
-        doc.put("owner_id", _client.getAuth().getUser().getId());
-        doc.put("summary", summary);
-        doc.put("location", location);
-        doc.put("description", description);
-        doc.put("start", start);
-        doc.put("end", end);
-        doc.put("attendees", attendees);
+    private void addEvent( String summary, String location, String description, EventTime start, EventTime end, ArrayList attendees) {
+        final Event doc = new Event();
+        doc.setOwner_id(client.getAuth().getUser().getId());
+        doc.setSummary(summary);
+        doc.setLocation(location);
+        doc.setDescription(description);
+        doc.setStart(start);
+        doc.setEnd(end);
+        doc.setAttendees(attendees);
 
             final Task<RemoteInsertOneResult> res = _remoteCollection.insertOne(doc);
         res.addOnCompleteListener(new OnCompleteListener<RemoteInsertOneResult>() {
