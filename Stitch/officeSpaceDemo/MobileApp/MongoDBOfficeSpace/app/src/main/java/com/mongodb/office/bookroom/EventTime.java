@@ -5,12 +5,12 @@ import java.util.Date;
 
 public class EventTime {
     private final Date dateTime;
-    private final String timezone;
+    private final String timeZone;
 
 
     public EventTime(Date dt) {
         dateTime=dt;
-        timezone="Ireland/Dublin";
+        timeZone="Ireland/Dublin";
 
     }
 
