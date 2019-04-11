@@ -108,8 +108,8 @@ public class MainActivity extends AppCompatActivity {
                     attendees.add(attendee0);
                     attendees.add(attendee1);
 
-                    ArrayList start = new ArrayList();
-                    ArrayList end = new ArrayList();
+                    Map<Map<String,Date>, Map<String,String>> start = new HashMap<>();
+                    Map<Map<String,Date>, Map<String,String>> end = new HashMap<>();
 
 
                     Date s  = new Date(System.currentTimeMillis());
@@ -124,11 +124,10 @@ public class MainActivity extends AppCompatActivity {
                     endObj.put("dateTime",e);
                     timezone.put("timeZone","Ireland/Dublin");
 
-                    start.add(startObj);
-                    start.add(timezone);
+                    start.put(startObj, timezone);
 
-                    end.add(startObj);
-                    end.add(timezone);
+                    end.put(endObj, timezone);
+
 
 
                     addEvent("Emergency Team Sync","Dublin Office", "Office Space Demo",start,end,attendees);
@@ -194,7 +193,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void addEvent(final String summary, String location, String description, ArrayList start, ArrayList end, ArrayList attendees) {
+    private void addEvent(final String summary, String location, String description, Map<Map<String,Date>, Map<String,String>> start, Map<Map<String,Date>, Map<String,String>> end, ArrayList attendees) {
         final Document doc = new Document();
         doc.put("owner_id", _client.getAuth().getUser().getId());
         doc.put("summary", summary);
