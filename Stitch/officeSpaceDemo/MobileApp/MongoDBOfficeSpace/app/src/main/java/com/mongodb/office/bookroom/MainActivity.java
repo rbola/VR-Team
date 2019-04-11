@@ -46,16 +46,13 @@ import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
 
 public class MainActivity extends AppCompatActivity {
 
+    private static final String TAG = "officeSpaceApp";
+    final StitchAppClient client = Stitch.getDefaultAppClient();
     private NfcAdapter nfc;
     private TextView text;
-    private static final String TAG = "officeSpaceApp";
     private StitchAppClient _client;
     private RemoteMongoClient _mongoClient;
     private RemoteMongoCollection _remoteCollection;
-    final StitchAppClient client = Stitch.getDefaultAppClient();
-
-
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -84,64 +81,66 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onResume(){
+    protected void onResume() {
         super.onResume();
 
         Intent intent = getIntent();
         String action = intent.getAction();
-        final long ONE_MINUTE_IN_MILLIS=60000;//millisecs
+        final long ONE_MINUTE_IN_MILLIS = 60000;//millisecs
 
 
         if (NfcAdapter.ACTION_TAG_DISCOVERED.equals(action)) {
 
             Tag tag = intent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
-            if(tag == null){
+            if (tag == null) {
                 text.setText("tag == null");
-            }else{
+            } else {
                 String tagInfo = "";
                 byte[] tagId = tag.getId();
-                for(int i=0; i<tagId.length; i++){
+                for (int i = 0; i < tagId.length; i++) {
                     tagInfo += Integer.toHexString(tagId[i] & 0xFF);
                 }
-                if(!tagInfo.isEmpty()){
-
-                    ArrayList attendees = new ArrayList();
-
-                    Map<String,String> attendee0=new HashMap<>();
-                    attendee0.put("email",("nunzio@example.com"));
-                    Map<String,String> attendee1=new HashMap<>();
-                    attendee1.put("email",("rita@example.com"));
+                if (!tagInfo.isEmpty()) {
 
 
-                    attendees.add(attendee0);
-                    attendees.add(attendee1);
+                    String summary = "Emergency Team Sync";
+                    String location = "Dublin Office";
+                    String description = "Office Space Demo";
 
 
-
-
-                    Date s  = new Date(System.currentTimeMillis());
-                    Date e  = new Date(s.getTime() + (30 * ONE_MINUTE_IN_MILLIS));
+                    Date s = new Date(System.currentTimeMillis());
+                    Date e = new Date(s.getTime() + (30 * ONE_MINUTE_IN_MILLIS));
 
                     EventTime start = new EventTime();
                     EventTime end = new EventTime();
 
                     start.setDateTime(s);
-                    start.setTimeZone("");
+                    start.setTimeZone("Ireland/Dublin");
                     end.setDateTime(e);
-                    end.setTimeZone("");
+                    end.setTimeZone("Ireland/Dublin");
 
-                    addEvent("Emergency Team Sync","Dublin Office", "Office Space Demo",start,end,attendees);
+                    ArrayList attendees = new ArrayList();
+
+                    Map<String, String> attendee0 = new HashMap<>();
+                    attendee0.put("email", ("nunzio@example.com"));
+                    Map<String, String> attendee1 = new HashMap<>();
+                    attendee1.put("email", ("rita@example.com"));
+
+
+                    attendees.add(attendee0);
+                    attendees.add(attendee1);
+
+                    addEvent(summary, location, description, start, end, attendees);
 
                     text.setText("Room 2003 is booked and my Team Alerted");
 
-                }
-                else{
+                } else {
                     text.setText("Room not available!");
                 }
 
 
             }
-        }else{
+        } else {
             Toast.makeText(this,
                     "Don't look so stressed, its bad for your health...",
                     Toast.LENGTH_SHORT).show();
@@ -149,6 +148,44 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    private void addEvent(String summary, String location, String description, EventTime start, EventTime end, ArrayList attendees) {
+        final Event doc = new Event();
+        doc.setOwner_id(client.getAuth().getUser().getId());
+        doc.setSummary(summary);
+        doc.setLocation(location);
+        doc.setDescription(description);
+        doc.setStart(start);
+        doc.setEnd(end);
+        doc.setAttendees(attendees);
+
+        final Task<RemoteInsertOneResult> res = _remoteCollection.insertOne(doc);
+        res.addOnCompleteListener(new OnCompleteListener<RemoteInsertOneResult>() {
+            @Override
+            public void onComplete(@NonNull final Task<RemoteInsertOneResult> task) {
+                if (task.isSuccessful()) {
+                    Log.e(TAG, "New Event added", task.getException());
+                } else {
+                    Log.e(TAG, "Error Event item", task.getException());
+                }
+            }
+        });
+    }
+
+    private NfcAdapter SetupNFC() {
+        NfcAdapter nfcAdapter = NfcAdapter.getDefaultAdapter(this);
+        if (nfcAdapter == null) {
+            Toast.makeText(this,
+                    "NFC NOT supported on this devices!",
+                    Toast.LENGTH_LONG).show();
+            finish();
+        } else if (!nfcAdapter.isEnabled()) {
+            Toast.makeText(this,
+                    "NFC NOT Enabled!",
+                    Toast.LENGTH_LONG).show();
+            finish();
+        }
+        return nfcAdapter;
+    }
 
     private static class MyAuthListener implements StitchAuthListener {
 
@@ -160,8 +197,8 @@ public class MainActivity extends AppCompatActivity {
         }
 
 
-
     }
+
     private class MyUpdateListener implements ChangeEventListener<Document> {
         @Override
         public void onEvent(final BsonValue documentId, final ChangeEvent<Document> event) {
@@ -191,45 +228,5 @@ public class MainActivity extends AppCompatActivity {
                 _remoteCollection.sync().resumeSyncForDocument(doc_id);
             }
         }
-    }
-
-    private void addEvent( String summary, String location, String description, EventTime start, EventTime end, ArrayList attendees) {
-        final Event doc = new Event();
-        doc.setOwner_id(client.getAuth().getUser().getId());
-        doc.setSummary(summary);
-        doc.setLocation(location);
-        doc.setDescription(description);
-        doc.setStart(start);
-        doc.setEnd(end);
-        doc.setAttendees(attendees);
-
-            final Task<RemoteInsertOneResult> res = _remoteCollection.insertOne(doc);
-        res.addOnCompleteListener(new OnCompleteListener<RemoteInsertOneResult>() {
-            @Override
-            public void onComplete(@NonNull final Task<RemoteInsertOneResult> task) {
-                if (task.isSuccessful()) {
-                    Log.e(TAG, "New Event added", task.getException());
-                } else {
-                    Log.e(TAG, "Error Event item", task.getException());
-                }
-            }
-        });
-    }
-
-
-    private NfcAdapter SetupNFC(){
-        NfcAdapter nfcAdapter = NfcAdapter.getDefaultAdapter(this);
-        if(nfcAdapter == null){
-            Toast.makeText(this,
-                    "NFC NOT supported on this devices!",
-                    Toast.LENGTH_LONG).show();
-            finish();
-        }else if(!nfcAdapter.isEnabled()){
-            Toast.makeText(this,
-                    "NFC NOT Enabled!",
-                    Toast.LENGTH_LONG).show();
-            finish();
-        }
-        return nfcAdapter;
     }
 }
