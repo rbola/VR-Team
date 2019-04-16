@@ -7,6 +7,9 @@
         android:padding="16dp"
         tools:context=".MainActivity" android:orientation="vertical">
 
+    <CalendarView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:id="@+id/calendarView"/>
     <TextView
             android:id="@+id/disclaimer"
             android:layout_width="wrap_content"
@@ -22,5 +25,22 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text=""/>
+    <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+        <EditText
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textEmailAddress"
+                android:ems="10"
+                android:id="@+id/editEmail"/>
+        <EditText
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="phone"
+                android:ems="10"
+                android:id="@+id/editPhone"/>
+    </LinearLayout>
 
 </LinearLayout>

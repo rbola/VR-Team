@@ -7,6 +7,8 @@ import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.CalendarView;
+import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -50,6 +52,10 @@ public class MainActivity extends AppCompatActivity {
     final StitchAppClient client = Stitch.getDefaultAppClient();
     private NfcAdapter nfc;
     private TextView text;
+    private EditText email;
+    private EditText phone;
+    private CalendarView date;
+
     private StitchAppClient _client;
     private RemoteMongoClient _mongoClient;
     private RemoteMongoCollection _remoteCollection;
@@ -61,6 +67,9 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         nfc = SetupNFC();
         text = findViewById(R.id.cardInfo);
+        email = findViewById(R.id.editEmail);
+        phone = findViewById(R.id.editPhone);
+        date = findViewById(R.id.calendarView);
 
         this._client = Stitch.getDefaultAppClient();
         this._client.getAuth().loginWithCredential(new AnonymousCredential());
@@ -104,11 +113,11 @@ public class MainActivity extends AppCompatActivity {
 
 
                     String summary = "Emergency Team Sync";
-                    String location = "Dublin Office";
+                    String location = "Dublin Office Room 2003";
                     String description = "Office Space Demo";
 
 
-                    Date s = new Date(System.currentTimeMillis());
+                    Date s = new Date(date.getDate());
                     Date e = new Date(s.getTime() + (30 * ONE_MINUTE_IN_MILLIS));
 
                     EventTime start = new EventTime();
@@ -122,13 +131,13 @@ public class MainActivity extends AppCompatActivity {
                     ArrayList attendees = new ArrayList();
 
                     Map<String, String> attendee0 = new HashMap<>();
-                    attendee0.put("email", ("nunzio@example.com"));
-                    Map<String, String> attendee1 = new HashMap<>();
-                    attendee1.put("email", ("rita@example.com"));
+                    attendee0.put("email", (email.getText().toString()));
+                    attendee0.put("phone", (phone.getText().toString()));
+
+
 
 
                     attendees.add(attendee0);
-                    attendees.add(attendee1);
 
                     addEvent(summary, location, description, start, end, attendees);
 
