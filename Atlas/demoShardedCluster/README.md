@@ -1,6 +1,6 @@
 # VR-Team
 
-##Create a M30 instance in Atlas with 2 Shards
+## Create a M30 instance in Atlas with 2 Shards
 
 In your Atlas project deploy a new cluster as a sharded cluster, toggle Shard your cluster (M30 and up) to Yes and select 2 shards.
 
